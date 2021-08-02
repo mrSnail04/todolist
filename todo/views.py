@@ -13,7 +13,7 @@ def home(request):
 
 def signupuser(request):
     if request.method == 'GET':
-        return render(request, 'todo/signupuser.html', {'form':UserCreationForm()})
+        return render(request, 'todo/signupuser.html', {'form': UserCreationForm()})
     else:
         if request.POST['password1'] == request.POST['password2']:
             try:
@@ -27,10 +27,11 @@ def signupuser(request):
                               {'form': UserCreationForm(), 'error': 'That username has already been taken.'})
         else:
             return render(request, 'todo/signupuser.html',
-                          {'form':UserCreationForm(), 'error': 'Password did not match'})
+                          {'form': UserCreationForm(), 'error': 'Password did not match'})
 
 
 def currenttodos(request):
+    # Фильтр задач. Автор задачи и её стату (не выполнена).
     todos = Todo.objects.filter(user=request.user, datecompleted__isnull=True)
     return render(request, 'todo/currenttodos.html', {'todos': todos})
 
@@ -46,6 +47,7 @@ def loginuser(request):
         return render(request, 'todo/loginuser.html', {'form': AuthenticationForm()})
     else:
         user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
+        # Если пользователь не существует, то перенаправляет на страницу регистрации.
         if user is None:
             return render(request, 'todo/loginuser.html',
                           {'form': AuthenticationForm(), 'error': 'Username or password did not match'})
@@ -64,17 +66,20 @@ def createtodo(request):
             newtodo.user = request.user
             newtodo.save()
             return redirect('currenttodos')
-        except 	ValueError:
+        except ValueError:
             return render(request, 'todo/createtodo.html', {'form': TodoForm(), 'error': 'Bad data passed in. Try again.'})
 
 
 def viewtodo(request, todo_pk):
+    # user=request.user - проверка пользователя.
+    # Выборка задач по pk и пользователю
     todo = get_object_or_404(Todo, pk=todo_pk, user=request.user)
     if request.method == 'GET':
         form = TodoForm(instance=todo)
         return render(request, 'todo/viewtodo.html', {'todo': todo, 'form': form})
     else:
         try:
+            #instance указывает, что мы изменяем уже существующий объект.
             form = TodoForm(request.POST, instance=todo)
             form.save()
             return redirect('currenttodos')
